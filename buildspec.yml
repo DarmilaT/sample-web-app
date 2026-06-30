@@ -2,8 +2,8 @@ version: 0.2
 
 env:
   variables:
-    AWS_DEFAULT_REGION: ap-south-1 # your region
-    IMAGE_REPO_NAME: node-pg-crud # your ECR repo name
+    AWS_DEFAULT_REGION: us-east-1 # your region
+    IMAGE_REPO_NAME: banking-app-test # your ECR repo name
     AWS_ACCOUNT_ID: "600929977705" # replace with your AWS account ID
     DB_HOST: localhost
     DB_PORT: "5432"
