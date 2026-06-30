@@ -17,7 +17,7 @@ app.get("/health", async (req, res) => {
 });
 
 app.get("/say-hi", (req, res) => {
-  res.send("Hi");
+  res.send("Hiiii");
 });
 
 app.use("/api/items", itemsRouter);
