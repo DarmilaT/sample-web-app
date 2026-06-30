@@ -2,9 +2,9 @@ version: 0.2
 
 env:
   variables:
-    AWS_DEFAULT_REGION: ap-south-1                # your region
-    IMAGE_REPO_NAME: node-pg-crud                  # your ECR repo name
-    AWS_ACCOUNT_ID: "123456789012"                  # replace with your AWS account ID
+    AWS_DEFAULT_REGION: ap-south-1 # your region
+    IMAGE_REPO_NAME: node-pg-crud # your ECR repo name
+    AWS_ACCOUNT_ID: "600929977705" # replace with your AWS account ID
     DB_HOST: localhost
     DB_PORT: "5432"
     DB_USER: postgres
@@ -28,11 +28,11 @@ phases:
       - echo Starting Postgres container for tests...
       - docker network create test-net
       - docker run -d --name test-db --network test-net
-          -e POSTGRES_USER=$DB_USER
-          -e POSTGRES_PASSWORD=$DB_PASSWORD
-          -e POSTGRES_DB=$DB_NAME
-          -p 5432:5432
-          postgres:16-alpine
+        -e POSTGRES_USER=$DB_USER
+        -e POSTGRES_PASSWORD=$DB_PASSWORD
+        -e POSTGRES_DB=$DB_NAME
+        -p 5432:5432
+        postgres:16-alpine
 
       - echo Waiting for Postgres to be ready...
       - |
@@ -64,4 +64,4 @@ phases:
 
 artifacts:
   files:
-    - '**/*'
+    - "**/*"
