@@ -2,9 +2,14 @@ version: 0.2
 
 env:
   variables:
-    AWS_DEFAULT_REGION: us-east-1 # change to your region
-    IMAGE_REPO_NAME: banking-app-test # your ECR repo name
-    AWS_ACCOUNT_ID: "123456789012" # replace with your AWS account ID
+    AWS_DEFAULT_REGION: ap-south-1                # your region
+    IMAGE_REPO_NAME: node-pg-crud                  # your ECR repo name
+    AWS_ACCOUNT_ID: "123456789012"                  # replace with your AWS account ID
+    DB_HOST: localhost
+    DB_PORT: "5432"
+    DB_USER: postgres
+    DB_PASSWORD: postgres
+    DB_NAME: appdb
 
 phases:
   install:
@@ -16,11 +21,29 @@ phases:
 
   pre_build:
     commands:
-      - echo Running tests...
-      - npm test
       - echo Logging in to Amazon ECR...
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
+
+      - echo Starting Postgres container for tests...
+      - docker network create test-net
+      - docker run -d --name test-db --network test-net
+          -e POSTGRES_USER=$DB_USER
+          -e POSTGRES_PASSWORD=$DB_PASSWORD
+          -e POSTGRES_DB=$DB_NAME
+          -p 5432:5432
+          postgres:16-alpine
+
+      - echo Waiting for Postgres to be ready...
+      - |
+        for i in $(seq 1 30); do
+          docker exec test-db pg_isready -U $DB_USER && break
+          echo "Waiting for db... ($i)"
+          sleep 2
+        done
+
+      - echo Running tests against live Postgres container...
+      - DB_HOST=localhost DB_PORT=5432 DB_USER=$DB_USER DB_PASSWORD=$DB_PASSWORD DB_NAME=$DB_NAME npm test
 
   build:
     commands:
@@ -34,8 +57,11 @@ phases:
       - echo Pushing image to Amazon ECR...
       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
+      - echo Cleaning up test containers...
+      - docker stop test-db && docker rm test-db
+      - docker network rm test-net
       - echo Image pushed successfully -> $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
 
 artifacts:
   files:
-    - "**/*"
+    - '**/*'
